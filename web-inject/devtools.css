@@ -1,142 +1,175 @@
-/* FILE: devtools.css */
-/* PATH: /web-inject/devtools.css */
-/* DESC: HUD overlay styling for IOS Dev Browser devtools */
+/* ============================================================
+   FILE: devtools.css
+   PATH: /web-inject/devtools.css
+   DESC: Styling for the injected DevTools HUD. Floating overlay,
+         fixed-size panel with scrollable content. Visibility is
+         controlled via CSS display, toggled from app.js without
+         resetting logs or DOM state.
+   ============================================================ */
 
-/* Root HUD container */
 #devbrowser-hud-root {
     position: fixed;
     bottom: 16px;
-    left: 16px;
     right: 16px;
-    max-height: 60vh; /* Expanded height */
-    background: rgba(0, 0, 0, 0.88);
-    color: #fff;
+    left: 16px;
+    max-width: 480px;
+    margin: 0 auto;
+    background: #111;
+    color: #f5f5f5;
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    font-size: 12px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    z-index: 2147483647;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    z-index: 999999;
 }
 
-/* Header: tabs + controls */
+#devbrowser-hud-root.devbrowser-hidden {
+    display: none;
+}
+
 #devbrowser-hud-header {
-    display: flex;
-    justify-content: space-between;
+    background: linear-gradient(90deg, #1c1c1c, #181818);
     padding: 6px 10px;
-    background: #111;
-    border-bottom: 1px solid #222;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Tabs container */
+#devbrowser-hud-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #aaa;
+}
+
 #devbrowser-hud-tabs {
     display: flex;
-    gap: 6px;
+    gap: 4px;
+    margin-left: 8px;
+    flex: 1;
 }
 
-/* Tab buttons */
-.devbrowser-hud-tab {
-    border: none;
+.devbrowser-tab {
+    padding: 3px 8px;
     border-radius: 999px;
-    padding: 4px 10px;
     font-size: 11px;
-    background: #1f2933;
-    color: #e5e5e5;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
 }
 
-.devbrowser-hud-tab.active {
-    background: #0a84ff;
+.devbrowser-tab.devbrowser-active {
+    background: #262626;
+    border-color: #333;
     color: #fff;
 }
 
-/* Control buttons (Clear, Close) */
-#devbrowser-hud-controls {
+#devbrowser-hud-actions {
     display: flex;
-    gap: 6px;
+    gap: 4px;
 }
 
-.devbrowser-hud-btn {
+.devbrowser-btn {
     border: none;
     border-radius: 999px;
-    padding: 4px 8px;
+    padding: 3px 8px;
     font-size: 11px;
-    background: #1f2933;
-    color: #e5e5e5;
+    background: #232323;
+    color: #eee;
+    cursor: pointer;
 }
 
-/* Body container — CRITICAL FIX */
+.devbrowser-btn:hover {
+    background: #2f2f2f;
+}
+
+.devbrowser-btn-danger {
+    background: #5a1b1b;
+    color: #ffdede;
+}
+
+.devbrowser-btn-danger:hover {
+    background: #7a2222;
+}
+
 #devbrowser-hud-body {
-    flex: 1;
+    background: #141414;
     display: flex;
     flex-direction: column;
+    min-height: 120px;
+    max-height: 300px;
     overflow: hidden;
-    min-height: 0; /* Prevents collapse in Safari */
 }
 
-/* Individual panels */
-.devbrowser-panel {
+#devbrowser-panel-console {
     flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+#devbrowser-console-output {
+    flex: 1;
+    min-height: 0;
+    padding: 6px 8px;
     overflow-y: auto;
-    padding: 6px 10px;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     font-size: 11px;
-    line-height: 1.35;
-    font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     background: #050505;
-    min-height: 0; /* Prevents collapse */
 }
 
-/* Console log lines */
 .devbrowser-log-line {
-    white-space: pre-wrap;
+    padding: 2px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
     word-break: break-word;
-    margin-bottom: 2px;
+    color: #ddd;
 }
 
-/* Level badges */
-.devbrowser-log-line span.level {
-    display: inline-block;
-    min-width: 36px;
-    text-align: center;
-    border-radius: 999px;
-    font-size: 9px;
-    padding: 1px 4px;
-    margin-right: 6px;
+.devbrowser-log-line .devbrowser-log-prefix {
+    color: #6ea8ff;
+    margin-right: 4px;
 }
 
-/* Console levels */
-.devbrowser-log-line span.level.log {
-    background: #1f2933;
-    color: #e5e5e5;
+.devbrowser-log-line.devbrowser-log-warn .devbrowser-log-prefix {
+    color: #ffd86e;
 }
 
-.devbrowser-log-line span.level.warn {
-    background: #92400e;
-    color: #fbbf24;
+.devbrowser-log-line.devbrowser-log-error .devbrowser-log-prefix {
+    color: #ff6e6e;
 }
 
-.devbrowser-log-line span.level.error {
-    background: #7f1d1d;
-    color: #fecaca;
+#devbrowser-console-input-row {
+    display: flex;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: #101010;
 }
 
-/* Network method badges (future use) */
-.devbrowser-log-line span.level.GET {
-    background: #1f2933;
-    color: #e5e5e5;
+#devbrowser-console-input {
+    flex: 1;
+    border: none;
+    padding: 6px 8px;
+    background: transparent;
+    color: #fff;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 11px;
 }
 
-.devbrowser-log-line span.level.POST {
+#devbrowser-console-input:focus {
+    outline: none;
+}
+
+#devbrowser-console-run {
+    border: none;
+    padding: 0 10px;
     background: #0a84ff;
     color: #fff;
-}
-
-.devbrowser-log-line span.level.BEACON {
-    background: #6b21a8;
-    color: #f3e8ff;
-}
-
-.devbrowser-log-line span.level.ERR {
-    background: #7f1d1d;
-    color: #fecaca;
+    font-size: 11px;
+    cursor: pointer;
 }
