@@ -89,13 +89,13 @@ function injectDevtoolsIntoFrame() {
         const cssLink = doc.createElement("link");
         cssLink.id = "__devbrowser_devtools_css";
         cssLink.rel = "stylesheet";
-        cssLink.href = REPO_BASE + "web-inject/devtools.css?v=2&ts=" + Date.now();
+        cssLink.href = REPO_BASE + "web-inject/devtools.css?v=3&ts=" + Date.now();
         doc.head.appendChild(cssLink);
 
         // Inject script with cache-busting
         const script = doc.createElement("script");
         script.id = "__devbrowser_devtools_script";
-        script.src = DEVTOOLS_SCRIPT + "?v=2&ts=" + Date.now();
+        script.src = DEVTOOLS_SCRIPT + "?v=3&ts=" + Date.now();
         script.onload = () => showToast("Devtools HUD initialized");
         script.onerror = () => showToast("Failed to load devtools");
         doc.head.appendChild(script);
