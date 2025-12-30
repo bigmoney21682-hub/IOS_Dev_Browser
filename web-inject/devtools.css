@@ -56,13 +56,6 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-#devbrowser-hud-tabs {
-    display: flex;
-    gap: 4px;
-    margin-left: 8px;
-    flex: 1;
-}
-
 .devbrowser-tab {
     padding: 3px 8px;
     border-radius: 999px;
@@ -89,13 +82,13 @@
     border-radius: 999px;
     padding: 3px 8px;
     font-size: 11px;
-    background: #232323;
-    color: #eee;
+    background: #0a84ff;
+    color: #fff;
     cursor: pointer;
 }
 
 .devbrowser-btn:hover {
-    background: #2f2f2f;
+    background: #0c95ff;
 }
 
 #devbrowser-hud-body {
@@ -128,12 +121,16 @@
     padding: 2px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.02);
     word-break: break-word;
-    color: #ddd;
+    color: #d0d0d0;
 }
 
 .devbrowser-log-line .devbrowser-log-prefix {
-    color: #6ea8ff;
     margin-right: 4px;
+}
+
+/* Color-coded prefixes by log type */
+.devbrowser-log-line.devbrowser-log-info .devbrowser-log-prefix {
+    color: #6ea8ff;
 }
 
 .devbrowser-log-line.devbrowser-log-warn .devbrowser-log-prefix {
@@ -142,6 +139,10 @@
 
 .devbrowser-log-line.devbrowser-log-error .devbrowser-log-prefix {
     color: #ff6e6e;
+}
+
+.devbrowser-log-line.devbrowser-log-debug .devbrowser-log-prefix {
+    color: #9b6eff;
 }
 
 #devbrowser-console-input-row {
