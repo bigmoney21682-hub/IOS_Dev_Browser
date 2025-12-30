@@ -1,5 +1,6 @@
 // FILE: service-worker.js
-// DESC: Basic PWA service worker for offline caching
+// PATH: /service-worker.js
+// DESC: Minimal service worker for PWA installability
 
 self.addEventListener("install", (event) => {
     self.skipWaiting();
