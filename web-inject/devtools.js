@@ -1,6 +1,6 @@
 // FILE: devtools.js
 // PATH: /web-inject/devtools.js
-// DESC: In-page devtools HUD for IOS Dev Browser (console hook, log overlay)
+// DESC: In-page devtools HUD (console + tab system scaffold)
 
 (function () {
     if (window.__devbrowser_devtools_initialized) return;
@@ -16,22 +16,48 @@
 
         root.innerHTML = `
             <div id="devbrowser-hud-header">
-                <div id="devbrowser-hud-title">IOS Dev Browser · Console</div>
+                <div id="devbrowser-hud-tabs">
+                    <button class="devbrowser-hud-tab active" data-tab="console">Console</button>
+                    <button class="devbrowser-hud-tab" data-tab="network">Network</button>
+                    <button class="devbrowser-hud-tab" data-tab="events">Events</button>
+                    <button class="devbrowser-hud-tab" data-tab="player">Player</button>
+                    <button class="devbrowser-hud-tab" data-tab="info">Info</button>
+                </div>
                 <div id="devbrowser-hud-controls">
-                    <button class="devbrowser-hud-btn active" data-tab="console">Console</button>
                     <button class="devbrowser-hud-btn" data-action="clear">Clear</button>
                     <button class="devbrowser-hud-btn" data-action="close">Close</button>
                 </div>
             </div>
+
             <div id="devbrowser-hud-body">
-                <div id="devbrowser-hud-log"></div>
+                <div class="devbrowser-panel" data-panel="console"></div>
+                <div class="devbrowser-panel" data-panel="network" style="display:none"></div>
+                <div class="devbrowser-panel" data-panel="events" style="display:none"></div>
+                <div class="devbrowser-panel" data-panel="player" style="display:none"></div>
+                <div class="devbrowser-panel" data-panel="info" style="display:none"></div>
             </div>
         `;
 
         document.body.appendChild(root);
 
+        const tabs = root.querySelectorAll(".devbrowser-hud-tab");
+        const panels = root.querySelectorAll(".devbrowser-panel");
+
+        tabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                const target = tab.getAttribute("data-tab");
+
+                tabs.forEach(t => t.classList.remove("active"));
+                tab.classList.add("active");
+
+                panels.forEach(p => {
+                    p.style.display = p.getAttribute("data-panel") === target ? "block" : "none";
+                });
+            });
+        });
+
         const controls = root.querySelector("#devbrowser-hud-controls");
-        const logEl = root.querySelector("#devbrowser-hud-log");
+        const panelConsole = root.querySelector('[data-panel="console"]');
 
         controls.addEventListener("click", (e) => {
             const btn = e.target.closest("button");
@@ -39,13 +65,13 @@
 
             const action = btn.getAttribute("data-action");
             if (action === "clear") {
-                logEl.innerHTML = "";
+                panelConsole.innerHTML = "";
             } else if (action === "close") {
                 root.remove();
             }
         });
 
-        return { root, logEl };
+        return { root, panelConsole };
     }
 
     function formatArgs(args) {
@@ -61,7 +87,7 @@
             .join(" ");
     }
 
-    function installConsoleHook(logEl) {
+    function installConsoleHook(panelConsole) {
         const originalLog = console.log;
         const originalWarn = console.warn;
         const originalError = console.error;
@@ -79,8 +105,8 @@
 
             line.appendChild(badge);
             line.appendChild(text);
-            logEl.appendChild(line);
-            logEl.scrollTop = logEl.scrollHeight;
+            panelConsole.appendChild(line);
+            panelConsole.scrollTop = panelConsole.scrollHeight;
         }
 
         console.log = function (...args) {
@@ -103,7 +129,7 @@
         const hud = createHud();
         if (!hud) return;
 
-        installConsoleHook(hud.logEl);
+        installConsoleHook(hud.panelConsole);
         console.log("[DevBrowser] Devtools HUD initialized");
     }
 
