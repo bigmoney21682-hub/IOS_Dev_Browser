@@ -1,6 +1,12 @@
+// ============================================================
 // FILE: app.js
 // PATH: /app.js
-// DESC: Core logic for IOS Dev Browser PWA (URL loading + devtools injector)
+// DESC: Core logic for IOS Dev Browser PWA.
+//       - Handles URL navigation into iframe
+//       - Injects DevTools HUD into same-origin pages
+//       - Uses bug button to toggle HUD visibility via postMessage
+//         without resetting logs or DOM state.
+// ============================================================
 
 const urlInput = document.getElementById("urlInput");
 const goBtn = document.getElementById("goBtn");
@@ -10,17 +16,16 @@ const debugBtn = document.getElementById("debugBtn");
 const REPO_BASE = "/IOS_Dev_Browser/";
 const DEVTOOLS_SCRIPT = REPO_BASE + "web-inject/devtools.js";
 
-let devtoolsEnabled = true;
+let hudVisible = true;
 
-// Auto-open HUD on startup
+// Initial toast to confirm app boot
 window.addEventListener("load", () => {
-    showToast("Devtools enabled");
+    showToast("Devtools ready");
 });
 
-// Load URL into iframe
+// URL navigation
 goBtn.addEventListener("click", () => {
     let url = urlInput.value.trim();
-
     if (!url) return;
 
     if (!url.startsWith("http://") && !url.startsWith("https://")) {
@@ -30,19 +35,29 @@ goBtn.addEventListener("click", () => {
     frame.src = url;
 });
 
-// Toggle devtools
+// Bug button toggles HUD visibility without re-injecting
 debugBtn.addEventListener("click", () => {
-    devtoolsEnabled = !devtoolsEnabled;
-    showToast(devtoolsEnabled ? "Devtools enabled" : "Devtools disabled");
-});
+    hudVisible = !hudVisible;
 
-// Inject devtools on iframe load
-frame.addEventListener("load", () => {
-    if (!devtoolsEnabled) {
-        showToast("Devtools disabled for this page");
-        return;
+    try {
+        if (frame.contentWindow) {
+            frame.contentWindow.postMessage(
+                {
+                    source: "IOS_DEV_BROWSER",
+                    type: "DEVTOOLS_TOGGLE_VISIBILITY"
+                },
+                "*"
+            );
+        }
+    } catch (e) {
+        // Ignore, just in case of edge cross-origin errors
     }
 
+    showToast(hudVisible ? "Devtools shown" : "Devtools hidden");
+});
+
+// Inject devtools when iframe loads a same-origin page
+frame.addEventListener("load", () => {
     injectDevtoolsIntoFrame();
 });
 
@@ -58,26 +73,30 @@ function injectDevtoolsIntoFrame() {
         const doc = win.document;
         const origin = win.location.origin;
 
+        // Only attach to same-origin pages (blank.html + any local pages)
         if (origin !== window.location.origin) {
             showToast("Cross-origin page: Devtools cannot attach");
             return;
         }
 
-        if (doc.getElementById("__devbrowser_devtools_script")) {
+        // If HUD root already exists, don't re-attach
+        if (doc.getElementById("devbrowser-hud-root")) {
             showToast("Devtools already attached");
             return;
         }
 
+        // Inject CSS with cache-busting
         const cssLink = doc.createElement("link");
         cssLink.id = "__devbrowser_devtools_css";
         cssLink.rel = "stylesheet";
-        cssLink.href = REPO_BASE + "web-inject/devtools.css?v=" + Date.now();
+        cssLink.href = REPO_BASE + "web-inject/devtools.css?v=2&ts=" + Date.now();
         doc.head.appendChild(cssLink);
 
+        // Inject script with cache-busting
         const script = doc.createElement("script");
         script.id = "__devbrowser_devtools_script";
-        script.src = DEVTOOLS_SCRIPT + "?v=" + Date.now();
-        script.onload = () => showToast("Devtools attached");
+        script.src = DEVTOOLS_SCRIPT + "?v=2&ts=" + Date.now();
+        script.onload = () => showToast("Devtools HUD initialized");
         script.onerror = () => showToast("Failed to load devtools");
         doc.head.appendChild(script);
 
@@ -86,7 +105,7 @@ function injectDevtoolsIntoFrame() {
     }
 }
 
-// Toast system
+// Simple toast system
 function showToast(message) {
     let toast = document.getElementById("__devbrowser_toast");
     if (!toast) {
@@ -117,7 +136,7 @@ function showToast(message) {
     }, 1800);
 }
 
-// Register service worker
+// Register service worker for PWA behavior
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js");
 }
