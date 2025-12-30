@@ -56,20 +56,20 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* Tabs: active = solid blue, inactive = 2px blue outline + white text */
 .devbrowser-tab {
-    padding: 3px 8px;
+    padding: 3px 10px;
     border-radius: 999px;
     font-size: 11px;
-    border: 1px solid transparent;
+    border: 2px solid #0a84ff;
     background: transparent;
-    color: #888;
+    color: #ffffff;
     cursor: pointer;
 }
 
 .devbrowser-tab.devbrowser-active {
-    background: #262626;
-    border-color: #333;
-    color: #fff;
+    background: #0a84ff;
+    color: #ffffff;
 }
 
 #devbrowser-hud-actions {
@@ -100,9 +100,20 @@
     overflow: hidden;
 }
 
-#devbrowser-panel-console {
+/* Generic panel container */
+.devbrowser-panel {
     flex: 1;
     min-height: 0;
+    display: none;
+    flex-direction: column;
+}
+
+.devbrowser-panel.devbrowser-panel-active {
+    display: flex;
+}
+
+/* Console panel */
+#devbrowser-panel-console {
     display: flex;
     flex-direction: column;
 }
@@ -172,4 +183,99 @@
     color: #fff;
     font-size: 11px;
     cursor: pointer;
+}
+
+/* Network panel */
+#devbrowser-panel-network {
+    display: flex;
+    flex-direction: column;
+    background: #050505;
+}
+
+#devbrowser-network-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 6px 8px;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 11px;
+}
+
+/* Request row */
+.devbrowser-network-row {
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+}
+
+.devbrowser-network-row-main {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.devbrowser-net-method {
+    min-width: 42px;
+    color: #6ea8ff;
+}
+
+.devbrowser-net-url {
+    flex: 1;
+    color: #e0e0e0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.devbrowser-net-status {
+    min-width: 38px;
+    text-align: right;
+    font-weight: 600;
+}
+
+.devbrowser-net-duration {
+    min-width: 46px;
+    text-align: right;
+    color: #b0b0b0;
+}
+
+/* Status colors (Chrome-style) */
+.devbrowser-net-status-2xx {
+    color: #5ddc5d;
+}
+
+.devbrowser-net-status-3xx {
+    color: #9e9e9e;
+}
+
+.devbrowser-net-status-4xx {
+    color: #ffd86e;
+}
+
+.devbrowser-net-status-5xx {
+    color: #ff6e6e;
+}
+
+/* Inline inspector (Safari-style indented block) */
+.devbrowser-network-inspector {
+    margin-top: 2px;
+    padding-left: 12px;
+    color: #cccccc;
+    line-height: 1.35;
+}
+
+.devbrowser-network-inspector-section {
+    margin-top: 3px;
+}
+
+.devbrowser-network-inspector-label {
+    font-weight: 600;
+    color: #f0f0f0;
+}
+
+.devbrowser-network-inspector-block {
+    margin-left: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: #d0d0d0;
 }
