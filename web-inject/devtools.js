@@ -1,141 +1,254 @@
+// ============================================================
 // FILE: devtools.js
 // PATH: /web-inject/devtools.js
-// DESC: In-page devtools HUD (console + tab system scaffold)
+// DESC: Injected DevTools HUD for IOS Dev Browser. Creates a
+//       floating overlay inside the target page iframe.
+//       - Intercepts console.log/warn/error
+//       - Shows logs in a console panel
+//       - Provides a simple eval input
+//       - Listens to postMessage from the outer app to toggle
+//         visibility without destroying DOM or logs.
+// ============================================================
 
 (function () {
-    if (window.__devbrowser_devtools_initialized) return;
-    window.__devbrowser_devtools_initialized = true;
+    if (window.__devbrowser_hud_initialized) {
+        return;
+    }
+    window.__devbrowser_hud_initialized = true;
 
-    const HUD_ID = "devbrowser-hud-root";
+    const STORAGE_KEY_VISIBLE = "devbrowser_hud_visible";
+
+    let hudRoot = null;
+    let consoleOutput = null;
+    let consoleInput = null;
+    let hudVisible = true;
+
+    function readInitialVisibility() {
+        try {
+            const stored = sessionStorage.getItem(STORAGE_KEY_VISIBLE);
+            if (stored === "0") return false;
+            if (stored === "1") return true;
+        } catch (e) {
+            // ignore
+        }
+        return true;
+    }
+
+    function persistVisibility(visible) {
+        try {
+            sessionStorage.setItem(STORAGE_KEY_VISIBLE, visible ? "1" : "0");
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    function setVisibility(visible) {
+        hudVisible = visible;
+        if (!hudRoot) return;
+        if (visible) {
+            hudRoot.classList.remove("devbrowser-hidden");
+        } else {
+            hudRoot.classList.add("devbrowser-hidden");
+        }
+        persistVisibility(visible);
+    }
 
     function createHud() {
-        if (document.getElementById(HUD_ID)) return;
+        hudRoot = document.createElement("div");
+        hudRoot.id = "devbrowser-hud-root";
 
-        const root = document.createElement("div");
-        root.id = HUD_ID;
+        const header = document.createElement("div");
+        header.id = "devbrowser-hud-header";
 
-        root.innerHTML = `
-            <div id="devbrowser-hud-header">
-                <div id="devbrowser-hud-tabs">
-                    <button class="devbrowser-hud-tab active" data-tab="console">Console</button>
-                    <button class="devbrowser-hud-tab" data-tab="network">Network</button>
-                    <button class="devbrowser-hud-tab" data-tab="events">Events</button>
-                    <button class="devbrowser-hud-tab" data-tab="player">Player</button>
-                    <button class="devbrowser-hud-tab" data-tab="info">Info</button>
-                </div>
-                <div id="devbrowser-hud-controls">
-                    <button class="devbrowser-hud-btn" data-action="clear">Clear</button>
-                    <button class="devbrowser-hud-btn" data-action="close">Close</button>
-                </div>
-            </div>
+        const title = document.createElement("div");
+        title.id = "devbrowser-hud-title";
+        title.textContent = "IOS Dev Browser Devtools";
 
-            <div id="devbrowser-hud-body">
-                <div class="devbrowser-panel" data-panel="console"></div>
-                <div class="devbrowser-panel" data-panel="network" style="display:none"></div>
-                <div class="devbrowser-panel" data-panel="events" style="display:none"></div>
-                <div class="devbrowser-panel" data-panel="player" style="display:none"></div>
-                <div class="devbrowser-panel" data-panel="info" style="display:none"></div>
-            </div>
-        `;
+        const tabs = document.createElement("div");
+        tabs.id = "devbrowser-hud-tabs";
 
-        document.body.appendChild(root);
+        const consoleTab = document.createElement("button");
+        consoleTab.className = "devbrowser-tab devbrowser-active";
+        consoleTab.textContent = "Console";
 
-        const tabs = root.querySelectorAll(".devbrowser-hud-tab");
-        const panels = root.querySelectorAll(".devbrowser-panel");
+        tabs.appendChild(consoleTab);
 
-        tabs.forEach(tab => {
-            tab.addEventListener("click", () => {
-                const target = tab.getAttribute("data-tab");
+        const actions = document.createElement("div");
+        actions.id = "devbrowser-hud-actions";
 
-                tabs.forEach(t => t.classList.remove("active"));
-                tab.classList.add("active");
+        const clearBtn = document.createElement("button");
+        clearBtn.className = "devbrowser-btn";
+        clearBtn.textContent = "Clear";
 
-                panels.forEach(p => {
-                    p.style.display = p.getAttribute("data-panel") === target ? "block" : "none";
-                });
-            });
-        });
+        const closeBtn = document.createElement("button");
+        closeBtn.className = "devbrowser-btn devbrowser-btn-danger";
+        closeBtn.textContent = "Close";
 
-        const controls = root.querySelector("#devbrowser-hud-controls");
-        const panelConsole = root.querySelector('[data-panel="console"]');
+        actions.appendChild(clearBtn);
+        actions.appendChild(closeBtn);
 
-        controls.addEventListener("click", (e) => {
-            const btn = e.target.closest("button");
-            if (!btn) return;
+        header.appendChild(title);
+        header.appendChild(tabs);
+        header.appendChild(actions);
 
-            const action = btn.getAttribute("data-action");
-            if (action === "clear") {
-                panelConsole.innerHTML = "";
-            } else if (action === "close") {
-                root.remove();
+        const body = document.createElement("div");
+        body.id = "devbrowser-hud-body";
+
+        const consolePanel = document.createElement("div");
+        consolePanel.id = "devbrowser-panel-console";
+
+        consoleOutput = document.createElement("div");
+        consoleOutput.id = "devbrowser-console-output";
+
+        const inputRow = document.createElement("div");
+        inputRow.id = "devbrowser-console-input-row";
+
+        consoleInput = document.createElement("input");
+        consoleInput.id = "devbrowser-console-input";
+        consoleInput.placeholder = "Type JavaScript and press Enter…";
+
+        const runBtn = document.createElement("button");
+        runBtn.id = "devbrowser-console-run";
+        runBtn.textContent = "Run";
+
+        inputRow.appendChild(consoleInput);
+        inputRow.appendChild(runBtn);
+
+        consolePanel.appendChild(consoleOutput);
+        consolePanel.appendChild(inputRow);
+
+        body.appendChild(consolePanel);
+
+        hudRoot.appendChild(header);
+        hudRoot.appendChild(body);
+
+        document.body.appendChild(hudRoot);
+
+        // Wire actions
+        clearBtn.addEventListener("click", () => {
+            if (consoleOutput) {
+                consoleOutput.innerHTML = "";
             }
         });
 
-        return { root, panelConsole };
+        closeBtn.addEventListener("click", () => {
+            setVisibility(false);
+        });
+
+        consoleInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                runConsoleInput();
+            }
+        });
+
+        runBtn.addEventListener("click", () => {
+            runConsoleInput();
+        });
+
+        // Initial visibility from storage
+        setVisibility(readInitialVisibility());
     }
 
-    function formatArgs(args) {
-        return args
-            .map((arg) => {
-                try {
-                    if (typeof arg === "string") return arg;
-                    return JSON.stringify(arg);
-                } catch {
-                    return String(arg);
-                }
-            })
-            .join(" ");
-    }
+    function appendLog(type, args) {
+        if (!consoleOutput) return;
 
-    function installConsoleHook(panelConsole) {
-        const originalLog = console.log;
-        const originalWarn = console.warn;
-        const originalError = console.error;
+        const line = document.createElement("div");
+        line.className = "devbrowser-log-line";
 
-        function appendLine(level, args) {
-            const line = document.createElement("div");
-            line.className = "devbrowser-log-line";
-
-            const badge = document.createElement("span");
-            badge.className = `level ${level}`;
-            badge.textContent = level.toUpperCase();
-
-            const text = document.createElement("span");
-            text.textContent = formatArgs(args);
-
-            line.appendChild(badge);
-            line.appendChild(text);
-            panelConsole.appendChild(line);
-            panelConsole.scrollTop = panelConsole.scrollHeight;
+        if (type === "warn") {
+            line.classList.add("devbrowser-log-warn");
+        } else if (type === "error") {
+            line.classList.add("devbrowser-log-error");
         }
 
+        const prefix = document.createElement("span");
+        prefix.className = "devbrowser-log-prefix";
+        prefix.textContent = "[" + type + "]";
+
+        const text = document.createElement("span");
+        text.textContent = " " + args.map(safeStringify).join(" ");
+
+        line.appendChild(prefix);
+        line.appendChild(text);
+
+        consoleOutput.appendChild(line);
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    }
+
+    function safeStringify(value) {
+        try {
+            if (typeof value === "string") return value;
+            return JSON.stringify(value);
+        } catch (e) {
+            try {
+                return String(value);
+            } catch (e2) {
+                return "[Unserializable]";
+            }
+        }
+    }
+
+    function interceptConsole() {
+        const original = {
+            log: console.log.bind(console),
+            warn: console.warn.bind(console),
+            error: console.error.bind(console)
+        };
+
         console.log = function (...args) {
-            appendLine("log", args);
-            originalLog.apply(console, args);
+            appendLog("log", args);
+            original.log(...args);
         };
 
         console.warn = function (...args) {
-            appendLine("warn", args);
-            originalWarn.apply(console, args);
+            appendLog("warn", args);
+            original.warn(...args);
         };
 
         console.error = function (...args) {
-            appendLine("error", args);
-            originalError.apply(console, args);
+            appendLog("error", args);
+            original.error(...args);
         };
+
+        // Hide reference if needed later
+        window.__devbrowser_console_original = original;
     }
 
-    function init() {
-        const hud = createHud();
-        if (!hud) return;
+    function runConsoleInput() {
+        if (!consoleInput) return;
+        const code = consoleInput.value.trim();
+        if (!code) return;
 
-        installConsoleHook(hud.panelConsole);
-        console.log("[DevBrowser] Devtools HUD initialized");
+        consoleInput.value = "";
+
+        appendLog("log", ["▶ " + code]);
+
+        try {
+            // eslint-disable-next-line no-eval
+            const result = eval(code);
+            appendLog("log", ["◀", result]);
+        } catch (e) {
+            appendLog("error", [String(e)]);
+        }
     }
 
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
-    } else {
-        init();
+    function setupPostMessageListener() {
+        window.addEventListener("message", (event) => {
+            const data = event.data;
+            if (!data || typeof data !== "object") return;
+            if (data.source !== "IOS_DEV_BROWSER") return;
+
+            if (data.type === "DEVTOOLS_TOGGLE_VISIBILITY") {
+                setVisibility(!hudVisible);
+            }
+        });
     }
+
+    // Initialize HUD
+    createHud();
+    interceptConsole();
+    setupPostMessageListener();
+
+    console.log("LOG[DevBrowser] Devtools HUD initialized");
 })();
