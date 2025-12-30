@@ -11,7 +11,6 @@ const debugBtn = document.getElementById("debugBtn");
 const REPO_BASE = "/IOS_Dev_Browser/";
 const DEVTOOLS_SCRIPT = REPO_BASE + "web-inject/devtools.js";
 
-// Track whether devtools are enabled for the current session
 let devtoolsEnabled = true;
 
 // Load URL into iframe
@@ -27,13 +26,13 @@ goBtn.addEventListener("click", () => {
     frame.src = url;
 });
 
-// Toggle devtools (for now just a flag + toast)
+// Toggle devtools
 debugBtn.addEventListener("click", () => {
     devtoolsEnabled = !devtoolsEnabled;
     showToast(devtoolsEnabled ? "Devtools enabled" : "Devtools disabled");
 });
 
-// When iframe finishes loading, attempt injection
+// Inject devtools on iframe load
 frame.addEventListener("load", () => {
     if (!devtoolsEnabled) {
         showToast("Devtools disabled for this page");
@@ -43,7 +42,6 @@ frame.addEventListener("load", () => {
     injectDevtoolsIntoFrame();
 });
 
-// Attempt to inject devtools into the iframe
 function injectDevtoolsIntoFrame() {
     const win = frame.contentWindow;
 
@@ -53,50 +51,38 @@ function injectDevtoolsIntoFrame() {
     }
 
     try {
-        // Security: this will throw on cross-origin frames
         const doc = win.document;
         const origin = win.location.origin;
 
         if (origin !== window.location.origin) {
-            console.warn("[DevBrowser] Cross-origin frame, cannot inject devtools:", origin);
             showToast("Cross-origin page: Devtools cannot attach");
             return;
         }
 
-        // Check if already injected
         if (doc.getElementById("__devbrowser_devtools_script")) {
-            console.log("[DevBrowser] Devtools already injected");
             showToast("Devtools already attached");
             return;
         }
 
-        // Inject CSS
         const cssLink = doc.createElement("link");
         cssLink.id = "__devbrowser_devtools_css";
         cssLink.rel = "stylesheet";
         cssLink.href = REPO_BASE + "web-inject/devtools.css";
         doc.head.appendChild(cssLink);
 
-        // Inject JS
         const script = doc.createElement("script");
         script.id = "__devbrowser_devtools_script";
         script.src = DEVTOOLS_SCRIPT;
-        script.onload = () => {
-            console.log("[DevBrowser] Devtools loaded");
-            showToast("Devtools attached");
-        };
-        script.onerror = () => {
-            console.warn("[DevBrowser] Failed to load devtools");
-            showToast("Failed to load devtools");
-        };
+        script.onload = () => showToast("Devtools attached");
+        script.onerror = () => showToast("Failed to load devtools");
         doc.head.appendChild(script);
+
     } catch (e) {
-        console.warn("[DevBrowser] Injection failed:", e);
         showToast("Injection failed (likely cross-origin)");
     }
 }
 
-// Simple toast for user feedback
+// Toast system
 function showToast(message) {
     let toast = document.getElementById("__devbrowser_toast");
     if (!toast) {
