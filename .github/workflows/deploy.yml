@@ -24,9 +24,14 @@ jobs:
       - name: Build static site
         run: |
           mkdir dist
+          cp index.html dist/
+          cp app.js dist/
+          cp manifest.json dist/
+          cp service-worker.js dist/
           mkdir -p dist/web-inject
           mkdir -p dist/docs
-          echo "<h1>IOS Dev Browser</h1><p>Phase 1 deployed successfully.</p>" > dist/index.html
+          cp -R web-inject/* dist/web-inject/ || true
+          cp -R docs/* dist/docs/ || true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
