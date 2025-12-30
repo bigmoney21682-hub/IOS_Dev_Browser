@@ -2,12 +2,13 @@
 /* PATH: /web-inject/devtools.css */
 /* DESC: HUD overlay styling for IOS Dev Browser devtools */
 
+/* Root HUD container */
 #devbrowser-hud-root {
     position: fixed;
     bottom: 16px;
     left: 16px;
     right: 16px;
-    max-height: 60vh; /* expanded */
+    max-height: 60vh; /* Expanded height */
     background: rgba(0, 0, 0, 0.88);
     color: #fff;
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -19,6 +20,7 @@
     z-index: 999999;
 }
 
+/* Header: tabs + controls */
 #devbrowser-hud-header {
     display: flex;
     justify-content: space-between;
@@ -27,11 +29,13 @@
     border-bottom: 1px solid #222;
 }
 
+/* Tabs container */
 #devbrowser-hud-tabs {
     display: flex;
     gap: 6px;
 }
 
+/* Tab buttons */
 .devbrowser-hud-tab {
     border: none;
     border-radius: 999px;
@@ -46,6 +50,7 @@
     color: #fff;
 }
 
+/* Control buttons (Clear, Close) */
 #devbrowser-hud-controls {
     display: flex;
     gap: 6px;
@@ -60,14 +65,16 @@
     color: #e5e5e5;
 }
 
+/* Body container — CRITICAL FIX */
 #devbrowser-hud-body {
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    min-height: 0; /* CRITICAL FIX */
+    min-height: 0; /* Prevents collapse in Safari */
 }
 
+/* Individual panels */
 .devbrowser-panel {
     flex: 1;
     overflow-y: auto;
@@ -76,5 +83,60 @@
     line-height: 1.35;
     font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     background: #050505;
-    min-height: 0; /* prevents collapse */
+    min-height: 0; /* Prevents collapse */
+}
+
+/* Console log lines */
+.devbrowser-log-line {
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-bottom: 2px;
+}
+
+/* Level badges */
+.devbrowser-log-line span.level {
+    display: inline-block;
+    min-width: 36px;
+    text-align: center;
+    border-radius: 999px;
+    font-size: 9px;
+    padding: 1px 4px;
+    margin-right: 6px;
+}
+
+/* Console levels */
+.devbrowser-log-line span.level.log {
+    background: #1f2933;
+    color: #e5e5e5;
+}
+
+.devbrowser-log-line span.level.warn {
+    background: #92400e;
+    color: #fbbf24;
+}
+
+.devbrowser-log-line span.level.error {
+    background: #7f1d1d;
+    color: #fecaca;
+}
+
+/* Network method badges (future use) */
+.devbrowser-log-line span.level.GET {
+    background: #1f2933;
+    color: #e5e5e5;
+}
+
+.devbrowser-log-line span.level.POST {
+    background: #0a84ff;
+    color: #fff;
+}
+
+.devbrowser-log-line span.level.BEACON {
+    background: #6b21a8;
+    color: #f3e8ff;
+}
+
+.devbrowser-log-line span.level.ERR {
+    background: #7f1d1d;
+    color: #fecaca;
 }
