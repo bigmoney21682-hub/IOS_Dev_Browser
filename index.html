@@ -1,6 +1,10 @@
-<!-- FILE: index.html -->
-<!-- PATH: /index.html -->
-<!-- DESC: PWA shell for IOS Dev Browser (URL bar + iframe + debug button) -->
+<!-- ============================================================
+     FILE: index.html
+     PATH: /index.html
+     DESC: PWA shell for IOS Dev Browser. Provides URL bar,
+           iframe host for target page, and top-level bug button
+           to toggle the injected DevTools HUD visibility.
+     ============================================================ -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -68,6 +72,7 @@
             position: relative;
             z-index: 0;
             display: block;
+            min-height: 0;
         }
     </style>
 </head>
@@ -80,7 +85,7 @@
         <button id="debugBtn">🐞</button>
     </div>
 
-    <!-- IMPORTANT: Correct GitHub Pages path -->
+    <!-- IMPORTANT: Correct GitHub Pages path for blank bootstrap page -->
     <iframe id="browserFrame" src="/IOS_Dev_Browser/blank.html"></iframe>
 
     <script src="app.js"></script>
