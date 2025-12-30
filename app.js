@@ -7,11 +7,15 @@ const goBtn = document.getElementById("goBtn");
 const frame = document.getElementById("browserFrame");
 const debugBtn = document.getElementById("debugBtn");
 
-// Hard-coded repo base for GitHub Pages deployment
 const REPO_BASE = "/IOS_Dev_Browser/";
 const DEVTOOLS_SCRIPT = REPO_BASE + "web-inject/devtools.js";
 
 let devtoolsEnabled = true;
+
+// Auto-open console HUD as soon as the PWA loads
+window.addEventListener("load", () => {
+    showToast("Devtools enabled");
+});
 
 // Load URL into iframe
 goBtn.addEventListener("click", () => {
