@@ -8,6 +8,8 @@
 //       - Provides a simple eval input
 //       - Listens to postMessage from the outer app to toggle
 //         visibility without destroying DOM or logs.
+//       - Two-row header: title + actions (row 1),
+//         section tabs (row 2, future-ready).
 // ============================================================
 
 (function () {
@@ -57,6 +59,7 @@
         hudRoot = document.createElement("div");
         hudRoot.id = "devbrowser-hud-root";
 
+        // HEADER (ROW 1)
         const header = document.createElement("div");
         header.id = "devbrowser-hud-header";
 
@@ -64,33 +67,33 @@
         title.id = "devbrowser-hud-title";
         title.textContent = "IOS Dev Browser Devtools";
 
-        const tabs = document.createElement("div");
-        tabs.id = "devbrowser-hud-tabs";
+        const headerSpacer = document.createElement("div");
+        headerSpacer.style.flex = "1";
 
-        const consoleTab = document.createElement("button");
-        consoleTab.className = "devbrowser-tab devbrowser-active";
-        consoleTab.textContent = "Console";
-
-        tabs.appendChild(consoleTab);
-
-        const actions = document.createElement("div");
-        actions.id = "devbrowser-hud-actions";
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "devbrowser-btn";
+        copyBtn.textContent = "Copy";
 
         const clearBtn = document.createElement("button");
         clearBtn.className = "devbrowser-btn";
         clearBtn.textContent = "Clear";
 
-        const closeBtn = document.createElement("button");
-        closeBtn.className = "devbrowser-btn devbrowser-btn-danger";
-        closeBtn.textContent = "Close";
-
-        actions.appendChild(clearBtn);
-        actions.appendChild(closeBtn);
-
         header.appendChild(title);
-        header.appendChild(tabs);
-        header.appendChild(actions);
+        header.appendChild(headerSpacer);
+        header.appendChild(copyBtn);
+        header.appendChild(clearBtn);
 
+        // HEADER (ROW 2) — TABS
+        const tabRow = document.createElement("div");
+        tabRow.id = "devbrowser-hud-tabrow";
+
+        const consoleTab = document.createElement("button");
+        consoleTab.className = "devbrowser-tab devbrowser-active";
+        consoleTab.textContent = "Console";
+
+        tabRow.appendChild(consoleTab);
+
+        // BODY + CONSOLE
         const body = document.createElement("div");
         body.id = "devbrowser-hud-body";
 
@@ -120,6 +123,7 @@
         body.appendChild(consolePanel);
 
         hudRoot.appendChild(header);
+        hudRoot.appendChild(tabRow);
         hudRoot.appendChild(body);
 
         document.body.appendChild(hudRoot);
@@ -131,8 +135,14 @@
             }
         });
 
-        closeBtn.addEventListener("click", () => {
-            setVisibility(false);
+        copyBtn.addEventListener("click", () => {
+            if (!consoleOutput) return;
+            const text = consoleOutput.innerText;
+            try {
+                navigator.clipboard.writeText(text);
+            } catch (e) {
+                // Clipboard may fail on some contexts; ignore silently
+            }
         });
 
         consoleInput.addEventListener("keydown", (e) => {
@@ -211,7 +221,6 @@
             original.error(...args);
         };
 
-        // Hide reference if needed later
         window.__devbrowser_console_original = original;
     }
 
