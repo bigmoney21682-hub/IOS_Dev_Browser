@@ -48,6 +48,14 @@
     color: #aaa;
 }
 
+#devbrowser-hud-tabrow {
+    background: #181818;
+    padding: 6px 10px;
+    display: flex;
+    gap: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 #devbrowser-hud-tabs {
     display: flex;
     gap: 4px;
@@ -88,15 +96,6 @@
 
 .devbrowser-btn:hover {
     background: #2f2f2f;
-}
-
-.devbrowser-btn-danger {
-    background: #5a1b1b;
-    color: #ffdede;
-}
-
-.devbrowser-btn-danger:hover {
-    background: #7a2222;
 }
 
 #devbrowser-hud-body {
