@@ -3,7 +3,7 @@
 // PATH: /web-inject/devtools.js
 // DESC: Injected DevTools HUD for IOS Dev Browser. Creates a
 //       floating overlay inside the target page iframe.
-//       - Intercepts console.log/warn/error
+//       - Intercepts console.log/info/warn/error/debug
 //       - Shows logs in a console panel
 //       - Provides a simple eval input
 //       - Listens to postMessage from the outer app to toggle
@@ -164,13 +164,7 @@
         if (!consoleOutput) return;
 
         const line = document.createElement("div");
-        line.className = "devbrowser-log-line";
-
-        if (type === "warn") {
-            line.classList.add("devbrowser-log-warn");
-        } else if (type === "error") {
-            line.classList.add("devbrowser-log-error");
-        }
+        line.className = "devbrowser-log-line devbrowser-log-" + type;
 
         const prefix = document.createElement("span");
         prefix.className = "devbrowser-log-prefix";
@@ -202,13 +196,20 @@
     function interceptConsole() {
         const original = {
             log: console.log.bind(console),
+            info: console.info ? console.info.bind(console) : console.log.bind(console),
             warn: console.warn.bind(console),
-            error: console.error.bind(console)
+            error: console.error.bind(console),
+            debug: console.debug ? console.debug.bind(console) : console.log.bind(console)
         };
 
         console.log = function (...args) {
-            appendLog("log", args);
+            appendLog("info", args);
             original.log(...args);
+        };
+
+        console.info = function (...args) {
+            appendLog("info", args);
+            original.info(...args);
         };
 
         console.warn = function (...args) {
@@ -221,6 +222,11 @@
             original.error(...args);
         };
 
+        console.debug = function (...args) {
+            appendLog("debug", args);
+            original.debug(...args);
+        };
+
         window.__devbrowser_console_original = original;
     }
 
@@ -231,12 +237,12 @@
 
         consoleInput.value = "";
 
-        appendLog("log", ["▶ " + code]);
+        appendLog("info", ["▶ " + code]);
 
         try {
             // eslint-disable-next-line no-eval
             const result = eval(code);
-            appendLog("log", ["◀", result]);
+            appendLog("info", ["◀", result]);
         } catch (e) {
             appendLog("error", [String(e)]);
         }
