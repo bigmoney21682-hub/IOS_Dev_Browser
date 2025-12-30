@@ -12,7 +12,7 @@ const DEVTOOLS_SCRIPT = REPO_BASE + "web-inject/devtools.js";
 
 let devtoolsEnabled = true;
 
-// Auto-open console HUD as soon as the PWA loads
+// Auto-open HUD on startup
 window.addEventListener("load", () => {
     showToast("Devtools enabled");
 });
@@ -71,12 +71,12 @@ function injectDevtoolsIntoFrame() {
         const cssLink = doc.createElement("link");
         cssLink.id = "__devbrowser_devtools_css";
         cssLink.rel = "stylesheet";
-        cssLink.href = REPO_BASE + "web-inject/devtools.css";
+        cssLink.href = REPO_BASE + "web-inject/devtools.css?v=" + Date.now();
         doc.head.appendChild(cssLink);
 
         const script = doc.createElement("script");
         script.id = "__devbrowser_devtools_script";
-        script.src = DEVTOOLS_SCRIPT;
+        script.src = DEVTOOLS_SCRIPT + "?v=" + Date.now();
         script.onload = () => showToast("Devtools attached");
         script.onerror = () => showToast("Failed to load devtools");
         doc.head.appendChild(script);
