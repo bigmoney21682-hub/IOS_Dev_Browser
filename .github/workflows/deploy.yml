@@ -1,3 +1,12 @@
+# ============================================================
+# FILE: deploy.yml
+# PATH: /.github/workflows/deploy.yml
+# DESC: GitHub Actions workflow that builds and deploys the
+#       IOS Dev Browser PWA to GitHub Pages. Ensures all
+#       required files (including blank.html) are copied
+#       into the dist/ folder before deployment.
+# ============================================================
+
 name: Deploy Web Assets to GitHub Pages
 
 on:
@@ -25,6 +34,7 @@ jobs:
         run: |
           mkdir dist
           cp index.html dist/
+          cp blank.html dist/
           cp app.js dist/
           cp manifest.json dist/
           cp service-worker.js dist/
