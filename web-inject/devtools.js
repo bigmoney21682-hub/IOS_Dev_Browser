@@ -14,6 +14,8 @@
 //       - Copy button copies all data from active panel
 //       - Listens to postMessage from the outer app to toggle
 //         visibility without destroying DOM or logs.
+//       - Integrates with MyTube debugBus.log(level, message)
+//         by wrapping it and mirroring logs into the HUD.
 // ============================================================
 
 (function () {
@@ -381,7 +383,6 @@
                         // ignore
                     }
 
-                    // Capture a small text preview via clone to avoid consuming body
                     response.clone().text().then((text) => {
                         entry.preview = truncatePreview(text);
                         refreshNetworkList();
@@ -425,8 +426,6 @@
                 expanded: false
             };
 
-            let sendBody = null;
-
             const originalOpen = xhr.open;
             xhr.open = function (method, url) {
                 entry.method = String(method || "GET").toUpperCase();
@@ -443,7 +442,6 @@
             const originalSend = xhr.send;
             xhr.send = function (body) {
                 entry.startTime = performance.now();
-                sendBody = body;
                 originalSend.apply(xhr, arguments);
             };
 
@@ -471,7 +469,7 @@
                 }
             });
 
-            createNetworkEntry(entry, true); // show row early with pending state
+            createNetworkEntry(entry, true);
             return xhr;
         }
 
@@ -599,14 +597,12 @@
 
             row.appendChild(main);
 
-            // Inline inspector (Safari-style indented block)
             const inspector = document.createElement("div");
             inspector.className = "devbrowser-network-inspector";
             if (!entry.expanded) {
                 inspector.style.display = "none";
             }
 
-            // Request headers
             const reqSection = document.createElement("div");
             reqSection.className = "devbrowser-network-inspector-section";
 
@@ -621,7 +617,6 @@
             reqSection.appendChild(reqLabel);
             reqSection.appendChild(reqBlock);
 
-            // Response headers
             const resSection = document.createElement("div");
             resSection.className = "devbrowser-network-inspector-section";
 
@@ -636,7 +631,6 @@
             resSection.appendChild(resLabel);
             resSection.appendChild(resBlock);
 
-            // Preview
             const prevSection = document.createElement("div");
             prevSection.className = "devbrowser-network-inspector-section";
 
@@ -679,12 +673,46 @@
         window.addEventListener("message", (event) => {
             const data = event.data;
             if (!data || typeof data !== "object") return;
-            if (data.source !== "IOS_DEV_BROWSER") return;
 
-            if (data.type === "DEVTOOLS_TOGGLE_VISIBILITY") {
+            if (data.source === "IOS_DEV_BROWSER" && data.type === "DEVTOOLS_TOGGLE_VISIBILITY") {
                 setVisibility(!hudVisible);
+                return;
+            }
+
+            // MyTube integration: receive mirrored logs from debugBus.log
+            if (data.source === "MYTUBE" && data.type === "LOG") {
+                appendLog("info", [`[MyTube:${data.level}]`, data.message]);
             }
         });
+    }
+
+    // ===== MyTube integration: wrap debugBus.log(level, message) =====
+
+    function wrapMyTubeDebugBus() {
+        try {
+            if (!window.debugBus || typeof window.debugBus.log !== "function") return;
+
+            const originalLog = window.debugBus.log.bind(window.debugBus);
+
+            window.debugBus.log = function (level, message) {
+                // Preserve MyTube internal behavior
+                originalLog(level, message);
+
+                // Mirror into parent (DevBrowser app)
+                try {
+                    window.parent.postMessage({
+                        source: "MYTUBE",
+                        type: "LOG",
+                        level,
+                        message
+                    }, "*");
+                } catch (e) {
+                    // ignore
+                }
+            };
+        } catch (e) {
+            // ignore
+        }
     }
 
     // Initialize HUD + interceptors
@@ -693,6 +721,7 @@
     interceptFetch();
     interceptXHR();
     setupPostMessageListener();
+    wrapMyTubeDebugBus();
 
     console.log("LOG[DevBrowser] Devtools HUD initialized");
 })();
