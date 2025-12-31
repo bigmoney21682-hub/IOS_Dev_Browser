@@ -2,7 +2,7 @@
 // FILE: app.js
 // PATH: /app.js
 // DESC: Core logic for IOS Dev Browser PWA.
-//       - Handles URL navigation into iframe
+//   -    - Handles URL navigation into iframe
 //       - Injects DevTools HUD into same-origin pages
 //       - Uses bug button to toggle HUD visibility via postMessage
 //         without resetting logs or DOM state.
