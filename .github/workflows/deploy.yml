@@ -36,6 +36,7 @@ jobs:
           cp index.html dist/
           cp blank.html dist/
           cp app.js dist/
+          cp proxy-mytube.html dist/
           cp manifest.json dist/
           cp service-worker.js dist/
           mkdir -p dist/web-inject
