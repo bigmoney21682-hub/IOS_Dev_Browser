@@ -3,7 +3,7 @@
 // PATH: /web-inject/devtools.js
 // DESC: Injected DevTools HUD for IOS Dev Browser. Creates a
 //       floating overlay inside the target page iframe.
-//       - Intercepts console.log/info/warn/error/debug
+//       - - Intercepts console.log/info/warn/error/debug
 //       - Shows logs in a console panel
 //       - Provides a simple eval input
 //       - Network panel scaffold:
